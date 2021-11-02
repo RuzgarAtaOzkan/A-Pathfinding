@@ -1,43 +1,37 @@
 // MODULES
 import React, { useState, useEffect, useRef } from 'react';
 
+import './index.css';
+
 // finds neighbour nodes
-function findNeighbours(currentParentNode, arr) {
-  if (!currentParentNode) {
-    throw new Error('Positions are not provided in findNeighbours');
+function findNeighbours({ currentParentNode, arr }) {
+  if (!currentParentNode || !arr) {
+    throw new Error('Missing arguments in findNeighbours');
   }
 
-  // X and Y position of the given node;
-  // Current parent node.
-  const { x, y } = pos;
+  const { x, y, width, height } = currentParentNode;
 
-  const offsetNavigation = {
-    current: null,
-    currentParentNode,
-    x: null,
-    y: null,
-    getInfo: function () {
-      return {
-        current: this.current,
-        x: this.x,
-        y: this.y,
-      };
-    },
-    0: {
-      0:
-        this.getInfo().current.x ==
-          this.getInfo().currentParentNode.x - this.getInfo().current.width &&
-        this.getInfo().current.y ==
-          this.getInfo().currentParentNode.y - this.getInfo().current.height,
-      1:
-        this.getInfo().current.x == this.getInfo().currentParentNode.x &&
-        this.getInfo().current.y ==
-          this.getInfo().currentParentNode.y - this.getInfo().current.height,
-      2: this.getInfo().currentParentNode.x + this.getInfo().width,
-    },
-    1: { 0: null, 1: null, 2: null },
-    2: { 0: null, 1: null, 2: null },
-  };
+  function isNeigbour(current, { i, j }) {
+    const nodesNavigation = {
+      0: {
+        0: current.x === x - width && current.y === y - height,
+        1: current.x === x && current.y === y - height,
+        2: current.x === x + width && current.y === y - height,
+      },
+      1: {
+        0: current.x === x - width && current.y === y,
+        //1: property 1 doesnt exist because that would be the selected current parent node.
+        2: current.x === x + width && current.y === y,
+      },
+      2: {
+        0: current.x === x - width && current.y === y + height,
+        1: current.x === x && current.y === y + height,
+        2: current.x === x + width && current.y === y + height,
+      },
+    };
+
+    return nodesNavigation[i][j];
+  }
 
   const neighbours = [];
 
@@ -46,11 +40,7 @@ function findNeighbours(currentParentNode, arr) {
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
       const neighbour = arr.find((current, index) => {
-        offsetNavigation.current = { ...current };
-        offsetNavigation.x = x;
-        offsetNavigation.y = y;
-
-        if (current.x == x - current.width && current.y == y - current.height) {
+        if (isNeigbour(current, { i, j })) {
           return current;
         }
 
@@ -68,12 +58,15 @@ function APathfinding({ gridCount }) {
   const [arr, setArr] = useState([]);
   const [mouseDown, setMouseDown] = useState(false);
   const [key, setKey] = useState('');
-  const [currentNode, setCurrentNode] = useState({});
+  const [currentParentNode, setCurrentParentNode] = useState({});
+  const [neighbours, setNeighbours] = useState([]);
   const [colors, setColors] = useState({
     black: 'black',
     white: 'white',
     startColor: 'blue',
     endColor: 'red',
+    neighbourColor: 'green',
+    pathColor: 'ocean',
   });
 
   const container = useRef();
@@ -82,8 +75,8 @@ function APathfinding({ gridCount }) {
     const _arr = [];
     for (let i = 0; i < gridCount; i++) {
       _arr[i] = {
-        width: null,
-        height: null,
+        width: 40,
+        height: 40,
         fCost: null,
         gCost: null,
         hCost: null,
@@ -134,6 +127,9 @@ function APathfinding({ gridCount }) {
     return arr.map((current, index) => {
       return (
         <div
+          onScroll={(e) => {
+            console.log(e);
+          }}
           onMouseUp={() => {
             setMouseDown(false);
           }}
@@ -142,7 +138,7 @@ function APathfinding({ gridCount }) {
           }}
           onMouseEnter={() => {
             if (mouseDown) {
-              let _arr = [...arr];
+              const _arr = [...arr];
 
               if (_arr[index].color == 'black') {
                 _arr[index].color = colors.white;
@@ -161,6 +157,10 @@ function APathfinding({ gridCount }) {
             switch (key) {
               case 's':
               case 'S':
+                /*
+
+                */
+                //
                 _arr = arr.map((el, i) => {
                   const currentEl = { ...el };
 
@@ -175,15 +175,9 @@ function APathfinding({ gridCount }) {
 
                 _arr[index].color = colors.startColor;
 
-                const { x, y } = _arr[index];
-
-                const neighbours = findNeighbours({ x, y }, _arr);
-
-                console.log(neighbours);
+                setCurrentParentNode(current);
 
                 setArr(_arr);
-
-                _arr = [...arr];
 
                 break;
               case 'e':
@@ -225,14 +219,29 @@ function APathfinding({ gridCount }) {
           key={index}
           style={{
             border: '1px solid black',
-            width: '35px',
-            height: '35px',
+            width: `${current.width}px`,
+            height: `${current.height}px`,
             backgroundColor: current.color,
+            color: `${current.color === 'white' ? 'black' : 'white'}`,
+            position: 'relative',
+            fontSize: '9px',
           }}
-          className="node"
+          className="node noselect"
           id={index + 1}
           index={index}
-        ></div>
+        >
+          <div style={{ position: 'absolute', top: '0', left: '0' }}>
+            {current.fCost}
+          </div>
+
+          <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
+            {current.gCost}
+          </div>
+
+          <div style={{ position: 'absolute', bottom: '0', right: '0' }}>
+            {current.hCost}
+          </div>
+        </div>
       );
     });
   }
@@ -255,7 +264,19 @@ function APathfinding({ gridCount }) {
         style={{ border: '1px solid black', margin: '1rem', padding: '1rem' }}
         className="buttons-area"
       >
-        <button style={{ margin: '0 1rem' }}>Start</button>
+        <button
+          onClick={() => {
+            const neighbours = findNeighbours({
+              currentParentNode,
+              arr,
+            });
+
+            setNeighbours([...neighbours]);
+          }}
+          style={{ margin: '0 1rem' }}
+        >
+          Start
+        </button>
         <button>Stop</button>
 
         <div></div>
