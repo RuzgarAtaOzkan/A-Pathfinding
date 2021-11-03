@@ -3,77 +3,28 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import './index.css';
 
-// finds neighbour nodes
-function findNeighbours({ currentParentNode, arr }) {
-  if (!currentParentNode || !arr) {
-    throw new Error('Missing arguments in findNeighbours');
-  }
-
-  const { x, y, width, height } = currentParentNode;
-
-  function isNeigbour(current, { i, j }) {
-    const nodesNavigation = {
-      0: {
-        0: current.x === x - width && current.y === y - height,
-        1: current.x === x && current.y === y - height,
-        2: current.x === x + width && current.y === y - height,
-      },
-      1: {
-        0: current.x === x - width && current.y === y,
-        //1: property 1 doesnt exist because that would be the selected current parent node.
-        2: current.x === x + width && current.y === y,
-      },
-      2: {
-        0: current.x === x - width && current.y === y + height,
-        1: current.x === x && current.y === y + height,
-        2: current.x === x + width && current.y === y + height,
-      },
-    };
-
-    return nodesNavigation[i][j];
-  }
-
-  const neighbours = [];
-
-  // The neighbour on the upper left
-
-  for (let i = 0; i < 3; i++) {
-    for (let j = 0; j < 3; j++) {
-      const neighbour = arr.find((current, index) => {
-        if (isNeigbour(current, { i, j })) {
-          return current;
-        }
-
-        return null;
-      });
-
-      neighbours.push(neighbour);
-    }
-  }
-
-  return neighbours;
-}
-
-function APathfinding({ gridCount }) {
+function APathfinding() {
   const [arr, setArr] = useState([]);
   const [mouseDown, setMouseDown] = useState(false);
   const [key, setKey] = useState('');
   const [currentParentNode, setCurrentParentNode] = useState({});
-  const [neighbours, setNeighbours] = useState([]);
-  const [colors, setColors] = useState({
+  const [startNode, setStartNode] = useState({});
+  const [endNode, setEndNode] = useState({});
+  //const [neighbours, setNeighbours] = useState([]);
+  const colors = {
     black: 'black',
     white: 'white',
     startColor: 'blue',
     endColor: 'red',
     neighbourColor: 'green',
-    pathColor: 'ocean',
-  });
+    pathColor: 'orange',
+  };
 
   const container = useRef();
 
   useEffect(() => {
     const _arr = [];
-    for (let i = 0; i < gridCount; i++) {
+    for (let i = 0; i < 600; i++) {
       _arr[i] = {
         width: 40,
         height: 40,
@@ -83,6 +34,7 @@ function APathfinding({ gridCount }) {
         x: null,
         y: null,
         color: 'white',
+        class: '',
         index: i,
         id: i + 1,
       };
@@ -123,6 +75,144 @@ function APathfinding({ gridCount }) {
     return () => {};
   }, []);
 
+  // finds neighbour nodes
+  function findNeighbours({ startNode, currentParentNode, arr }) {
+    if (!startNode || !currentParentNode || !arr) {
+      throw new Error('Missing arguments in findNeighbours');
+    }
+
+    const { x, y, width, height } = currentParentNode;
+
+    function isNeighbour({ current, i, j }) {
+      if (
+        !current ||
+        i === undefined ||
+        i === null ||
+        j === null ||
+        j === undefined
+      ) {
+        throw new Error('Missing arguments in isNeighbour');
+      }
+
+      if (current.color === 'black') {
+        return null;
+      }
+
+      if (currentParentNode.id === endNode?.id) {
+        console.log('Destination has been reached');
+        return;
+      }
+
+      const nodesNavigation = {
+        0: {
+          0: current.x === x - width && current.y === y - height,
+          1: current.x === x && current.y === y - height,
+          2: current.x === x + width && current.y === y - height,
+        },
+        1: {
+          0: current.x === x - width && current.y === y,
+          //1: property 1 doesnt exist because that would be the selected current parent node.
+          2: current.x === x + width && current.y === y,
+        },
+        2: {
+          0: current.x === x - width && current.y === y + height,
+          1: current.x === x && current.y === y + height,
+          2: current.x === x + width && current.y === y + height,
+        },
+      };
+
+      return nodesNavigation[i][j];
+    }
+
+    const neighbours = [];
+
+    // The neighbour on the upper left
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        const neighbour = arr.find((current) => {
+          if (isNeighbour({ current, i, j })) {
+            return current;
+          }
+
+          return null;
+        });
+
+        if (neighbour) {
+          let startNodeSubstractionX = neighbour.x - startNode.x;
+          let startNodeSubstractionY = neighbour.y - startNode.y;
+
+          // make all the substraction values positive
+          if (startNodeSubstractionX < 0) {
+            startNodeSubstractionX = startNodeSubstractionX * -1;
+          }
+
+          if (startNodeSubstractionY < 0) {
+            startNodeSubstractionY = startNodeSubstractionY * -1;
+          }
+
+          if (startNodeSubstractionX && startNodeSubstractionY) {
+            // the ones on the corner
+
+            neighbour.gCost = Math.floor(
+              Math.sqrt(
+                startNodeSubstractionX * startNodeSubstractionX +
+                  startNodeSubstractionY * startNodeSubstractionY
+              )
+            );
+          } else {
+            if (!startNodeSubstractionX) {
+              neighbour.gCost = startNodeSubstractionY;
+            } else {
+              neighbour.gCost = startNodeSubstractionX;
+            }
+          }
+
+          let endNodeSubstractionX = neighbour.x - endNode.x;
+          let endNodeSubstractionY = neighbour.y - endNode.y;
+
+          if (endNodeSubstractionX < 0) {
+            endNodeSubstractionX = endNodeSubstractionX * -1;
+          }
+
+          if (endNodeSubstractionY < 0) {
+            endNodeSubstractionY = endNodeSubstractionY * -1;
+          }
+
+          if (endNodeSubstractionX && endNodeSubstractionY) {
+            neighbour.hCost = Math.floor(
+              Math.sqrt(
+                endNodeSubstractionX * endNodeSubstractionX +
+                  endNodeSubstractionY * endNodeSubstractionY
+              )
+            );
+          } else {
+            if (!endNodeSubstractionX) {
+              neighbour.hCost = endNodeSubstractionY;
+            } else {
+              neighbour.hCost = endNodeSubstractionX;
+            }
+          }
+
+          // Pathfinding navigation value;
+          neighbour.fCost = neighbour.gCost + neighbour.hCost;
+        }
+
+        const updatedNeighbour = {
+          ...neighbour,
+          color: colors.neighbourColor,
+          gCost: neighbour?.gCost,
+          fCost: neighbour?.fCost,
+          hCost: neighbour?.hCost,
+        };
+
+        neighbours.push(updatedNeighbour);
+      }
+    }
+
+    return neighbours;
+  }
+
   function renderGrid() {
     return arr.map((current, index) => {
       return (
@@ -140,9 +230,9 @@ function APathfinding({ gridCount }) {
             if (mouseDown) {
               const _arr = [...arr];
 
-              if (_arr[index].color == 'black') {
+              if (_arr[index].color === 'black') {
                 _arr[index].color = colors.white;
-              } else if (_arr[index].color == 'white') {
+              } else if (_arr[index].color === 'white') {
                 _arr[index].color = colors.black;
               }
 
@@ -157,10 +247,6 @@ function APathfinding({ gridCount }) {
             switch (key) {
               case 's':
               case 'S':
-                /*
-
-                */
-                //
                 _arr = arr.map((el, i) => {
                   const currentEl = { ...el };
 
@@ -175,6 +261,7 @@ function APathfinding({ gridCount }) {
 
                 _arr[index].color = colors.startColor;
 
+                setStartNode(current);
                 setCurrentParentNode(current);
 
                 setArr(_arr);
@@ -195,7 +282,7 @@ function APathfinding({ gridCount }) {
                 });
 
                 _arr[index].color = colors.endColor;
-
+                setEndNode(current);
                 setArr(_arr);
 
                 _arr = [...arr];
@@ -208,7 +295,6 @@ function APathfinding({ gridCount }) {
                   _arr[index].color = colors.black;
                 }
 
-                console.log(_arr[index]);
                 setArr(_arr);
 
                 _arr = [...arr];
@@ -222,7 +308,6 @@ function APathfinding({ gridCount }) {
             width: `${current.width}px`,
             height: `${current.height}px`,
             backgroundColor: current.color,
-            color: `${current.color === 'white' ? 'black' : 'white'}`,
             position: 'relative',
             fontSize: '9px',
           }}
@@ -266,12 +351,76 @@ function APathfinding({ gridCount }) {
       >
         <button
           onClick={() => {
+            if (
+              !Object.entries(startNode).length ||
+              !Object.entries(endNode).length
+            ) {
+              alert('Please Choose a Star and an End First');
+              return;
+            }
+
+            function findMin(numArr) {
+              if (!numArr) {
+                throw new Error(
+                  'Number Array is not specified in findMin function'
+                );
+              }
+
+              let lowestInt = 0;
+              let highestInt = Number.MAX_SAFE_INTEGER;
+
+              for (let i = 0; i < numArr.length; i++) {
+                if (numArr[i]) {
+                  let previousNum = numArr[i];
+
+                  while (highestInt > previousNum) {
+                    highestInt = previousNum;
+                    lowestInt = highestInt;
+                  }
+                }
+              }
+
+              return lowestInt;
+            }
+
             const neighbours = findNeighbours({
+              startNode,
               currentParentNode,
               arr,
             });
 
-            setNeighbours([...neighbours]);
+            const closestFCost = findMin(
+              neighbours.map((currentNeighbour) => currentNeighbour.fCost)
+            );
+
+            const newCurrentParentNode = neighbours.find(
+              (currentNeighbour, index) =>
+                currentNeighbour.fCost === closestFCost
+            );
+
+            setCurrentParentNode(newCurrentParentNode);
+
+            const updatedArr = arr.map((currentNode, index) => {
+              let selectedNode = null;
+              for (let i = 0; i < neighbours.length; i++) {
+                if (currentNode.id === neighbours[i].id) {
+                  selectedNode = neighbours[i];
+                  break;
+                }
+              }
+
+              if (selectedNode) {
+                return {
+                  ...selectedNode,
+                };
+              } else {
+                return {
+                  ...currentNode,
+                };
+              }
+            });
+
+            setArr(updatedArr);
           }}
           style={{ margin: '0 1rem' }}
         >

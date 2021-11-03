@@ -7,3 +7,17 @@
             user-select: none; /* Non-prefixed version, currently
                                   supported by Chrome, Edge, Opera and Firefox */
 }
+
+
+.green {
+  background-color: rgb(21, 255, 60);
+}
+
+.red {
+  background-color:rgb(255, 36, 36);
+}
+
+.blue {
+  background-color: rgb(72, 99, 255);
+}
+

@@ -10,7 +10,7 @@ import './styles/index.css';
 function App() {
   return (
     <div className="App">
-      <APathfinding gridCount={600} />
+      <APathfinding />
     </div>
   );
 }
