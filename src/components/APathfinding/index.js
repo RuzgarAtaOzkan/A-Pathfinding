@@ -1,6 +1,13 @@
 // MODULES
 import React, { useState, useEffect, useRef } from 'react';
 
+// UTILS
+import findMin from '../../utils/findMin';
+import updateNeighbours from '../../utils/updateNeighbours';
+
+// HOOKS
+import useInterval from '../../hooks/useInterval';
+
 import './index.css';
 
 function APathfinding() {
@@ -10,6 +17,14 @@ function APathfinding() {
   const [currentParentNode, setCurrentParentNode] = useState({});
   const [startNode, setStartNode] = useState({});
   const [endNode, setEndNode] = useState({});
+  const [walkablePath, setWalkablePath] = useState([]);
+
+  useEffect(() => {
+    //console.log(currentParentNode.id, endNode.id);
+
+    return () => {};
+  }, [currentParentNode, endNode]);
+
   //const [neighbours, setNeighbours] = useState([]);
   const colors = {
     black: 'black',
@@ -78,7 +93,7 @@ function APathfinding() {
   // finds neighbour nodes
   function findNeighbours({ startNode, currentParentNode, arr }) {
     if (!startNode || !currentParentNode || !arr) {
-      throw new Error('Missing arguments in findNeighbours');
+      return null;
     }
 
     const { x, y, width, height } = currentParentNode;
@@ -94,12 +109,15 @@ function APathfinding() {
         throw new Error('Missing arguments in isNeighbour');
       }
 
-      if (current.color === 'black') {
+      if (
+        current.color === 'black' ||
+        current.color === colors.startColor ||
+        current.color === colors.endColor
+      ) {
         return null;
       }
 
-      if (currentParentNode.id === endNode?.id) {
-        console.log('Destination has been reached');
+      if (current.color === colors.pathColor) {
         return;
       }
 
@@ -241,66 +259,47 @@ function APathfinding() {
               //_arr = [...arr];
             }
           }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            let _arr = [...arr];
+
+            _arr = arr.map((el, i) => {
+              const currentEl = { ...el };
+
+              if (currentEl.color === 'red') {
+                currentEl.color = 'white';
+              }
+
+              return {
+                ...currentEl,
+              };
+            });
+
+            _arr[index].color = colors.endColor;
+            setEndNode(current);
+            setArr(_arr);
+          }}
           onClick={() => {
             let _arr = [...arr];
 
-            switch (key) {
-              case 's':
-              case 'S':
-                _arr = arr.map((el, i) => {
-                  const currentEl = { ...el };
+            _arr = arr.map((el, i) => {
+              const currentEl = { ...el };
 
-                  if (currentEl.color === 'blue') {
-                    currentEl.color = 'white';
-                  }
+              if (currentEl.color === 'blue') {
+                currentEl.color = 'white';
+              }
 
-                  return {
-                    ...currentEl,
-                  };
-                });
+              return {
+                ...currentEl,
+              };
+            });
 
-                _arr[index].color = colors.startColor;
+            _arr[index].color = colors.startColor;
 
-                setStartNode(current);
-                setCurrentParentNode(current);
+            setStartNode(current);
+            setCurrentParentNode(current);
 
-                setArr(_arr);
-
-                break;
-              case 'e':
-              case 'E':
-                _arr = arr.map((el, i) => {
-                  const currentEl = { ...el };
-
-                  if (currentEl.color === 'red') {
-                    currentEl.color = 'white';
-                  }
-
-                  return {
-                    ...currentEl,
-                  };
-                });
-
-                _arr[index].color = colors.endColor;
-                setEndNode(current);
-                setArr(_arr);
-
-                _arr = [...arr];
-
-                break;
-              default:
-                if (_arr[index].color === 'black') {
-                  _arr[index].color = colors.white;
-                } else if (_arr[index].color === 'white') {
-                  _arr[index].color = colors.black;
-                }
-
-                setArr(_arr);
-
-                _arr = [...arr];
-
-                break;
-            }
+            setArr(_arr);
           }}
           key={index}
           style={{
@@ -359,68 +358,72 @@ function APathfinding() {
               return;
             }
 
-            function findMin(numArr) {
-              if (!numArr) {
-                throw new Error(
-                  'Number Array is not specified in findMin function'
-                );
+            function startAlgorithm() {
+              const neighbours = findNeighbours({
+                startNode,
+                currentParentNode,
+                arr: arr,
+              });
+
+              if (!neighbours) {
+                return;
               }
 
-              let lowestInt = 0;
-              let highestInt = Number.MAX_SAFE_INTEGER;
+              const closestFCost = findMin(
+                neighbours.map((currentNeighbour) => currentNeighbour.fCost)
+              );
 
-              for (let i = 0; i < numArr.length; i++) {
-                if (numArr[i]) {
-                  let previousNum = numArr[i];
+              const newCurrentParentNode = neighbours.find(
+                (currentNeighbour, index) =>
+                  currentNeighbour.fCost === closestFCost
+              );
 
-                  while (highestInt > previousNum) {
-                    highestInt = previousNum;
-                    lowestInt = highestInt;
+              setCurrentParentNode(newCurrentParentNode);
+
+              const _walkablePath = [
+                ...walkablePath,
+                { ...newCurrentParentNode },
+              ];
+
+              setWalkablePath(_walkablePath);
+
+              // update the neighbours
+              const updatedArr = updateNeighbours(arr, neighbours);
+
+              setArr(updatedArr);
+
+              const updatedArr2 = updatedArr.map(
+                (currentNode, currentNodeIndex) => {
+                  let selectedNode = null;
+
+                  for (let i = 0; i < _walkablePath.length; i++) {
+                    if (currentNode.id === _walkablePath[i].id) {
+                      selectedNode = {
+                        ...currentNode,
+                        color: colors.pathColor,
+                      };
+                      break;
+                    }
                   }
-                }
-              }
 
-              return lowestInt;
+                  if (selectedNode) {
+                    return selectedNode;
+                  }
+
+                  return currentNode;
+                }
+              );
+
+              setArr(updatedArr2);
+
+              if (newCurrentParentNode?.id === endNode?.id) {
+                // Draw the path, destination has been found
+
+                return 0;
+              }
             }
 
-            const neighbours = findNeighbours({
-              startNode,
-              currentParentNode,
-              arr,
-            });
-
-            const closestFCost = findMin(
-              neighbours.map((currentNeighbour) => currentNeighbour.fCost)
-            );
-
-            const newCurrentParentNode = neighbours.find(
-              (currentNeighbour, index) =>
-                currentNeighbour.fCost === closestFCost
-            );
-
-            setCurrentParentNode(newCurrentParentNode);
-
-            const updatedArr = arr.map((currentNode, index) => {
-              let selectedNode = null;
-              for (let i = 0; i < neighbours.length; i++) {
-                if (currentNode.id === neighbours[i].id) {
-                  selectedNode = neighbours[i];
-                  break;
-                }
-              }
-
-              if (selectedNode) {
-                return {
-                  ...selectedNode,
-                };
-              } else {
-                return {
-                  ...currentNode,
-                };
-              }
-            });
-
-            setArr(updatedArr);
+            startAlgorithm();
           }}
           style={{ margin: '0 1rem' }}
         >
