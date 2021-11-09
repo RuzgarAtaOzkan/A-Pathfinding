@@ -5,19 +5,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import findMin from '../../utils/findMin';
 import updateNeighbours from '../../utils/updateNeighbours';
 
-// HOOKS
-import useInterval from '../../hooks/useInterval';
-
 import './index.css';
 
 function APathfinding() {
   const [arr, setArr] = useState([]);
   const [mouseDown, setMouseDown] = useState(false);
-  const [key, setKey] = useState('');
   const [currentParentNode, setCurrentParentNode] = useState({});
   const [startNode, setStartNode] = useState({});
   const [endNode, setEndNode] = useState({});
   const [walkablePath, setWalkablePath] = useState([]);
+  const [start, setStart] = useState(false);
+
+  const startClickRef = React.useRef();
 
   useEffect(() => {
     //console.log(currentParentNode.id, endNode.id);
@@ -39,10 +38,10 @@ function APathfinding() {
 
   useEffect(() => {
     const _arr = [];
-    for (let i = 0; i < 600; i++) {
+    for (let i = 0; i < 800; i++) {
       _arr[i] = {
-        width: 40,
-        height: 40,
+        width: 30,
+        height: 30,
         fCost: null,
         gCost: null,
         hCost: null,
@@ -56,14 +55,6 @@ function APathfinding() {
     }
 
     setArr(_arr);
-
-    document.addEventListener('keydown', (e) => {
-      setKey(e.key);
-    });
-
-    document.addEventListener('keyup', (e) => {
-      setKey('');
-    });
 
     window.addEventListener('load', () => {
       const childrenLength = container.current.children.length;
@@ -358,6 +349,24 @@ function APathfinding() {
               return;
             }
 
+            setStart(true);
+
+            setInterval(() => {
+              startClickRef.current.click();
+            }, 0);
+          }}
+          style={{ margin: '0 1rem' }}
+        >
+          Start
+        </button>
+
+        <div
+          ref={startClickRef}
+          onClick={() => {
+            if (!start) {
+              return;
+            }
+
             function startAlgorithm() {
               const neighbours = findNeighbours({
                 startNode,
@@ -425,10 +434,7 @@ function APathfinding() {
 
             startAlgorithm();
           }}
-          style={{ margin: '0 1rem' }}
-        >
-          Start
-        </button>
+        ></div>
         <button>Stop</button>
 
         <div></div>
