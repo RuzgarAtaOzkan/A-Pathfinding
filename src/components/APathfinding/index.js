@@ -15,6 +15,7 @@ function APathfinding() {
   const [endNode, setEndNode] = useState({});
   const [walkablePath, setWalkablePath] = useState([]);
   const [start, setStart] = useState(false);
+  const [intervalId, setIntervalId] = useState(-1);
 
   const startClickRef = React.useRef();
 
@@ -100,11 +101,7 @@ function APathfinding() {
         throw new Error('Missing arguments in isNeighbour');
       }
 
-      if (
-        current.color === 'black' ||
-        current.color === colors.startColor ||
-        current.color === colors.endColor
-      ) {
+      if (current.color === 'black' || current.color === colors.startColor) {
         return null;
       }
 
@@ -148,6 +145,11 @@ function APathfinding() {
         });
 
         if (neighbour) {
+          if (neighbour.id === endNode.id) {
+            clearTimeout(intervalId);
+            return alert('Arrived');
+          }
+
           let startNodeSubstractionX = neighbour.x - startNode.x;
           let startNodeSubstractionY = neighbour.y - startNode.y;
 
@@ -351,9 +353,11 @@ function APathfinding() {
 
             setStart(true);
 
-            setInterval(() => {
+            const id = setInterval(() => {
               startClickRef.current.click();
             }, 0);
+
+            setIntervalId(id);
           }}
           style={{ margin: '0 1rem' }}
         >
@@ -435,7 +439,7 @@ function APathfinding() {
             startAlgorithm();
           }}
         ></div>
-        <button>Stop</button>
+        <button onClick={() => clearInterval(intervalId)}>Stop</button>
 
         <div></div>
       </div>
