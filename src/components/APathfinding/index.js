@@ -88,6 +88,8 @@ function APathfinding() {
       return null;
     }
 
+    const currentNeighbours = [];
+
     const { x, y, width, height } = currentParentNode;
 
     function isNeighbour({ current, i, j }) {
@@ -105,8 +107,11 @@ function APathfinding() {
         return null;
       }
 
-      if (current.color === colors.pathColor) {
-        return;
+      if (currentNeighbours.length === 0) {
+      } else {
+        if (current.color === colors.pathColor) {
+          return;
+        }
       }
 
       const nodesNavigation = {
@@ -132,8 +137,6 @@ function APathfinding() {
 
     const neighbours = [];
 
-    // The neighbour on the upper left
-
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
         const neighbour = arr.find((current) => {
@@ -145,6 +148,7 @@ function APathfinding() {
         });
 
         if (neighbour) {
+          currentNeighbours.push(neighbour);
           if (neighbour.id === endNode.id) {
             clearTimeout(intervalId);
             return alert('Arrived');
