@@ -16,14 +16,15 @@ function APathfinding() {
   const [walkablePath, setWalkablePath] = useState([]);
   const [start, setStart] = useState(false);
   const [intervalId, setIntervalId] = useState(-1);
+  const [onlyNeighbours, setOnlyNeighbours] = useState([]);
 
   const startClickRef = React.useRef();
 
   useEffect(() => {
-    //console.log(currentParentNode.id, endNode.id);
+    console.log(onlyNeighbours.length);
 
     return () => {};
-  }, [currentParentNode, endNode]);
+  }, [onlyNeighbours]);
 
   //const [neighbours, setNeighbours] = useState([]);
   const colors = {
@@ -104,14 +105,38 @@ function APathfinding() {
       }
 
       if (current.color === 'black' || current.color === colors.startColor) {
-        return null;
+        return false;
       }
 
-      if (currentNeighbours.length === 0) {
-      } else {
-        if (current.color === colors.pathColor) {
-          return;
+      if (currentNeighbours.length === 0 && onlyNeighbours.length) {
+        //currentParentNode.color = 'white';
+        /*
+                  const updatedArr = arr.map((currentNode) => {
+          if (currentNode.id === currentParentNode.id) {
+            return {
+              ...currentNode,
+              color: 'pink',
+            };
+          }
+
+          return currentNode;
+        });
+
+        setArr(updatedArr);
+        */
+        //console.log(onlyNeighbours.length);
+
+        if (onlyNeighbours[0]) {
+          //console.log(onlyNeighbours[0]);
+          //setCurrentParentNode(onlyNeighbours[0]);
+          //console.log( 'Setting current parent node on one of the only neighbours' );
         }
+
+        //return false;
+      }
+
+      if (current.color === colors.pathColor) {
+        return false;
       }
 
       const nodesNavigation = {
@@ -137,8 +162,14 @@ function APathfinding() {
 
     const neighbours = [];
 
+    setOnlyNeighbours(
+      arr.filter((currentNode) => currentNode.color === colors.neighbourColor)
+    );
+
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
+        //console.log(onlyNeighbours.length);
+
         const neighbour = arr.find((current) => {
           if (isNeighbour({ current, i, j })) {
             return current;
@@ -149,6 +180,7 @@ function APathfinding() {
 
         if (neighbour) {
           currentNeighbours.push(neighbour);
+
           if (neighbour.id === endNode.id) {
             clearTimeout(intervalId);
             return alert('Arrived');
@@ -223,6 +255,13 @@ function APathfinding() {
 
         neighbours.push(updatedNeighbour);
       }
+    }
+
+    //console.log(currentNeighbours);
+
+    if (!currentNeighbours.length) {
+      setCurrentParentNode(onlyNeighbours[0]);
+      return null;
     }
 
     return neighbours;
@@ -359,7 +398,7 @@ function APathfinding() {
 
             const id = setInterval(() => {
               startClickRef.current.click();
-            }, 0);
+            }, 10);
 
             setIntervalId(id);
           }}
@@ -382,7 +421,7 @@ function APathfinding() {
                 arr: arr,
               });
 
-              if (!neighbours) {
+              if (!neighbours || neighbours.length === 0) {
                 return;
               }
 
