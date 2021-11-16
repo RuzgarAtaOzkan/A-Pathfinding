@@ -12,10 +12,10 @@ function App() {
     <div
       style={{
         display: 'flex',
-        margin: '2rem',
-        justifyContent: 'flex-end',
+
+        justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'row-reverse',
+        flexDirection: 'column-reverse',
       }}
       className="App"
     >

@@ -65,10 +65,10 @@ function APathfinding() {
 
   useEffect(() => {
     const _arr = [];
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 1500; i++) {
       _arr[i] = {
-        width: 30,
-        height: 30,
+        width: 25,
+        height: 25,
         fCost: null,
         gCost: null,
         hCost: null,
@@ -400,15 +400,15 @@ function APathfinding() {
           index={index}
         >
           <div style={{ position: 'absolute', top: '0', left: '0' }}>
-            {current.fCost}
+            {/*current.fCost*/}
           </div>
 
           <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
-            {current.gCost}
+            {/*current.gCost*/}
           </div>
 
           <div style={{ position: 'absolute', bottom: '0', right: '0' }}>
-            {current.hCost}
+            {/*current.hCost*/}
           </div>
         </div>
       );
@@ -431,13 +431,12 @@ function APathfinding() {
 
       <div
         style={{
-          marginRight: '2rem',
+          margin: '2rem',
           borderRadius: '5px',
           border: '1px solid grey',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          flexDirection: 'column',
         }}
         className="buttons-area"
       >
@@ -463,7 +462,7 @@ function APathfinding() {
 
             const id = setInterval(() => {
               startClickRef.current.click();
-            }, 10);
+            }, 50);
 
             setIntervalId(id);
           }}
@@ -503,10 +502,10 @@ function APathfinding() {
 
             const _arr = [];
 
-            for (let i = 0; i < 1000; i++) {
+            for (let i = 0; i < 1500; i++) {
               _arr[i] = {
-                width: 30,
-                height: 30,
+                width: 20,
+                height: 20,
                 fCost: null,
                 gCost: null,
                 hCost: null,
