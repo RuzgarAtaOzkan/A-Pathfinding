@@ -2,7 +2,7 @@
 
 function findMin(numArr) {
   if (!numArr) {
-    throw new Error('Number Array is not specified in findMin function');
+    return null;
   }
 
   let lowestInt = 0;

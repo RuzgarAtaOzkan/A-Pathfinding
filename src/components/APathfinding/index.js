@@ -21,7 +21,7 @@ function APathfinding() {
   const startClickRef = React.useRef();
 
   useEffect(() => {
-    console.log(onlyNeighbours.length);
+    //console.log(onlyNeighbours.length);
 
     return () => {};
   }, [onlyNeighbours]);
@@ -104,38 +104,11 @@ function APathfinding() {
         throw new Error('Missing arguments in isNeighbour');
       }
 
-      if (current.color === 'black' || current.color === colors.startColor) {
-        return false;
-      }
-
-      if (currentNeighbours.length === 0 && onlyNeighbours.length) {
-        //currentParentNode.color = 'white';
-        /*
-                  const updatedArr = arr.map((currentNode) => {
-          if (currentNode.id === currentParentNode.id) {
-            return {
-              ...currentNode,
-              color: 'pink',
-            };
-          }
-
-          return currentNode;
-        });
-
-        setArr(updatedArr);
-        */
-        //console.log(onlyNeighbours.length);
-
-        if (onlyNeighbours[0]) {
-          //console.log(onlyNeighbours[0]);
-          //setCurrentParentNode(onlyNeighbours[0]);
-          //console.log( 'Setting current parent node on one of the only neighbours' );
-        }
-
-        //return false;
-      }
-
-      if (current.color === colors.pathColor) {
+      if (
+        current.color === 'black' ||
+        current.color === colors.startColor ||
+        current.color === colors.pathColor
+      ) {
         return false;
       }
 
@@ -161,10 +134,6 @@ function APathfinding() {
     }
 
     const neighbours = [];
-
-    setOnlyNeighbours(
-      arr.filter((currentNode) => currentNode.color === colors.neighbourColor)
-    );
 
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
@@ -259,7 +228,9 @@ function APathfinding() {
 
     //console.log(currentNeighbours);
 
-    if (!currentNeighbours.length) {
+    if (currentNeighbours.length === 0) {
+      //console.log(currentNeighbours.length, onlyNeighbours);
+
       setCurrentParentNode(onlyNeighbours[0]);
       return null;
     }
@@ -415,14 +386,33 @@ function APathfinding() {
             }
 
             function startAlgorithm() {
-              const neighbours = findNeighbours({
+              setOnlyNeighbours(
+                arr.filter(
+                  (currentNode) => currentNode.color === colors.neighbourColor
+                )
+              );
+
+              let neighbours = findNeighbours({
                 startNode,
                 currentParentNode,
                 arr: arr,
               });
 
-              if (!neighbours || neighbours.length === 0) {
-                return;
+              if (!neighbours) {
+                /*
+                                  const closestOnlyNeighbourFCost = findMin(
+                  onlyNeighbours.map(
+                    (currentOnlyNeighbour) => currentOnlyNeighbour.fCost
+                  )
+                );
+
+                const closestOnlyNeighbour = onlyNeighbours.find(
+                  (currentOnlyNeighbour) =>
+                    currentOnlyNeighbour.fCost === closestOnlyNeighbourFCost
+                );
+                */
+
+                neighbours = [...onlyNeighbours];
               }
 
               const closestFCost = findMin(
@@ -431,7 +421,7 @@ function APathfinding() {
 
               const newCurrentParentNode = neighbours.find(
                 (currentNeighbour, index) =>
-                  currentNeighbour.fCost === closestFCost
+                  currentNeighbour?.fCost === closestFCost
               );
 
               setCurrentParentNode(newCurrentParentNode);
