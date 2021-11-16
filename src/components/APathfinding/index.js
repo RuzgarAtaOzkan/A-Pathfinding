@@ -20,10 +20,13 @@ function APathfinding() {
   const startClickRef = React.useRef();
 
   useEffect(() => {
-    //console.log(onlyNeighbours.length);
+    if (Object.entries(currentParentNode).length) {
+      const { gCost, hCost, fCost } = currentParentNode;
+      console.log(gCost, hCost, fCost);
+    }
 
     return () => {};
-  }, [onlyNeighbours]);
+  }, [currentParentNode]);
 
   //const [neighbours, setNeighbours] = useState([]);
   const colors = {
@@ -459,7 +462,6 @@ function APathfinding() {
             }
 
             const id = setInterval(() => {
-              console.log('working');
               startClickRef.current.click();
             }, 10);
 
@@ -500,6 +502,7 @@ function APathfinding() {
             clearInterval(intervalId);
 
             const _arr = [];
+
             for (let i = 0; i < 1000; i++) {
               _arr[i] = {
                 width: 30,
@@ -509,7 +512,7 @@ function APathfinding() {
                 hCost: null,
                 x: null,
                 y: null,
-                color: 'white',
+                color: arr[i].color === 'black' ? 'black' : 'white',
                 class: '',
                 index: i,
                 id: i + 1,
