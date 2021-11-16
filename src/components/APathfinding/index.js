@@ -14,7 +14,6 @@ function APathfinding() {
   const [startNode, setStartNode] = useState({});
   const [endNode, setEndNode] = useState({});
   const [walkablePath, setWalkablePath] = useState([]);
-  const [start, setStart] = useState(false);
   const [intervalId, setIntervalId] = useState(-1);
   const [onlyNeighbours, setOnlyNeighbours] = useState([]);
 
@@ -38,9 +37,32 @@ function APathfinding() {
 
   const container = useRef();
 
+  function injectCoordinates(_arr) {
+    const childrenLength = container.current.children.length;
+
+    for (let i = 0; i < childrenLength; i++) {
+      if (container.current && container.current.children) {
+        const currentChildren = container.current.children[i];
+
+        const currentIndex = Number(currentChildren.getAttribute('index'));
+
+        const { x, y, width, height } = currentChildren.getBoundingClientRect();
+
+        _arr[currentIndex].x = x;
+        _arr[currentIndex].y = y;
+        _arr[currentIndex].width = width;
+        _arr[currentIndex].height = height;
+      }
+    }
+
+    setArr(_arr);
+
+    return _arr;
+  }
+
   useEffect(() => {
     const _arr = [];
-    for (let i = 0; i < 800; i++) {
+    for (let i = 0; i < 1000; i++) {
       _arr[i] = {
         width: 30,
         height: 30,
@@ -56,34 +78,95 @@ function APathfinding() {
       };
     }
 
-    setArr(_arr);
-
-    window.addEventListener('load', () => {
-      const childrenLength = container.current.children.length;
-
-      for (let i = 0; i < childrenLength; i++) {
-        if (container.current && container.current.children) {
-          const currentChildren = container.current.children[i];
-
-          const currentIndex = Number(currentChildren.getAttribute('index'));
-
-          const { x, y, width, height } =
-            currentChildren.getBoundingClientRect();
-
-          _arr[currentIndex].x = x;
-          _arr[currentIndex].y = y;
-          _arr[currentIndex].width = width;
-          _arr[currentIndex].height = height;
-        }
-      }
-
-      setArr(_arr);
+    window.addEventListener('load', function () {
+      injectCoordinates(_arr);
     });
+
+    setArr(_arr);
 
     return () => {};
   }, []);
 
   // finds neighbour nodes
+
+  /*
+  function findPath({ startNode, currentParentNode, arr }) {
+    if (!startNode || !currentParentNode || !arr) {
+      return null;
+    }
+
+    const { x, y, width, height } = currentParentNode;
+
+    function isNeighbour({ current, i, j }) {
+      if (
+        !current ||
+        i === undefined ||
+        i === null ||
+        j === null ||
+        j === undefined
+      ) {
+        throw new Error('Missing arguments in isNeighbour');
+      }
+
+      if (
+        current.color === 'black' ||
+        current.color === colors.startColor ||
+        current.color === colors.pathColor
+      ) {
+        return false;
+      }
+
+      const nodesNavigation = {
+        0: {
+          0: current.x === x - width && current.y === y - height,
+          1: current.x === x && current.y === y - height,
+          2: current.x === x + width && current.y === y - height,
+        },
+        1: {
+          0: current.x === x - width && current.y === y,
+          //1: property 1 doesnt exist because that would be the selected current parent node.
+          2: current.x === x + width && current.y === y,
+        },
+        2: {
+          0: current.x === x - width && current.y === y + height,
+          1: current.x === x && current.y === y + height,
+          2: current.x === x + width && current.y === y + height,
+        },
+      };
+
+      return nodesNavigation[i][j];
+    }
+
+    const neighbours = [];
+
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        //console.log(onlyNeighbours.length);
+
+        const neighbour = arr.find((current) => {
+          if (isNeighbour({ current, i, j })) {
+            return current;
+          }
+
+          return null;
+        });
+
+        const updatedNeighbour = {
+          ...neighbour,
+          color: colors.neighbourColor,
+          gCost: neighbour?.gCost,
+          fCost: neighbour?.fCost,
+          hCost: neighbour?.hCost,
+        };
+
+        neighbours.push(updatedNeighbour);
+      }
+    }
+
+    return neighbours;
+  }
+  */
+
   function findNeighbours({ startNode, currentParentNode, arr }) {
     if (!startNode || !currentParentNode || !arr) {
       return null;
@@ -149,11 +232,6 @@ function APathfinding() {
 
         if (neighbour) {
           currentNeighbours.push(neighbour);
-
-          if (neighbour.id === endNode.id) {
-            clearTimeout(intervalId);
-            return alert('Arrived');
-          }
 
           let startNodeSubstractionX = neighbour.x - startNode.x;
           let startNodeSubstractionY = neighbour.y - startNode.y;
@@ -229,9 +307,6 @@ function APathfinding() {
     //console.log(currentNeighbours);
 
     if (currentNeighbours.length === 0) {
-      //console.log(currentNeighbours.length, onlyNeighbours);
-
-      setCurrentParentNode(onlyNeighbours[0]);
       return null;
     }
 
@@ -352,39 +427,111 @@ function APathfinding() {
       </div>
 
       <div
-        style={{ border: '1px solid black', margin: '1rem', padding: '1rem' }}
+        style={{
+          marginRight: '2rem',
+          borderRadius: '5px',
+          border: '1px solid grey',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexDirection: 'column',
+        }}
         className="buttons-area"
       >
         <button
+          style={{
+            border: 'none',
+            padding: '1rem 2rem',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            margin: '1rem',
+            color: 'green',
+            borderRadius: '5px',
+          }}
           onClick={() => {
             if (
               !Object.entries(startNode).length ||
               !Object.entries(endNode).length
             ) {
-              alert('Please Choose a Star and an End First');
+              alert('Make sure you have choosen both Start and Endpoint first');
               return;
             }
 
-            setStart(true);
-
             const id = setInterval(() => {
+              console.log('working');
               startClickRef.current.click();
             }, 10);
 
             setIntervalId(id);
           }}
-          style={{ margin: '0 1rem' }}
         >
           Start
+        </button>
+
+        <button
+          style={{
+            border: 'none',
+            padding: '1rem 2rem',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            margin: '1rem',
+            color: 'red',
+            borderRadius: '5px',
+          }}
+          onClick={() => clearInterval(intervalId)}
+        >
+          Stop
+        </button>
+
+        <button
+          style={{
+            border: 'none',
+            padding: '1rem 2rem',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            margin: '1rem',
+            color: 'blue',
+            borderRadius: '5px',
+          }}
+          onClick={() => {
+            clearInterval(intervalId);
+
+            const _arr = [];
+            for (let i = 0; i < 1000; i++) {
+              _arr[i] = {
+                width: 30,
+                height: 30,
+                fCost: null,
+                gCost: null,
+                hCost: null,
+                x: null,
+                y: null,
+                color: 'white',
+                class: '',
+                index: i,
+                id: i + 1,
+              };
+            }
+
+            setArr(_arr);
+            injectCoordinates(_arr);
+            setCurrentParentNode({});
+            setStartNode({});
+            setEndNode({});
+            setWalkablePath([]);
+            setIntervalId(-1);
+            setOnlyNeighbours([]);
+          }}
+        >
+          Reset
         </button>
 
         <div
           ref={startClickRef}
           onClick={() => {
-            if (!start) {
-              return;
-            }
-
             function startAlgorithm() {
               setOnlyNeighbours(
                 arr.filter(
@@ -399,19 +546,6 @@ function APathfinding() {
               });
 
               if (!neighbours) {
-                /*
-                                  const closestOnlyNeighbourFCost = findMin(
-                  onlyNeighbours.map(
-                    (currentOnlyNeighbour) => currentOnlyNeighbour.fCost
-                  )
-                );
-
-                const closestOnlyNeighbour = onlyNeighbours.find(
-                  (currentOnlyNeighbour) =>
-                    currentOnlyNeighbour.fCost === closestOnlyNeighbourFCost
-                );
-                */
-
                 neighbours = [...onlyNeighbours];
               }
 
@@ -423,6 +557,13 @@ function APathfinding() {
                 (currentNeighbour, index) =>
                   currentNeighbour?.fCost === closestFCost
               );
+
+              if (newCurrentParentNode?.id === endNode?.id) {
+                // Draw the path, destination has been found
+                alert('Arrived');
+                clearInterval(intervalId);
+                return 0;
+              }
 
               setCurrentParentNode(newCurrentParentNode);
 
@@ -461,20 +602,11 @@ function APathfinding() {
               );
 
               setArr(updatedArr2);
-
-              if (newCurrentParentNode?.id === endNode?.id) {
-                // Draw the path, destination has been found
-
-                return 0;
-              }
             }
 
             startAlgorithm();
           }}
-        ></div>
-        <button onClick={() => clearInterval(intervalId)}>Stop</button>
-
-        <div></div>
+        />
       </div>
     </>
   );

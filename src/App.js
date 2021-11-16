@@ -9,7 +9,16 @@ import './styles/index.css';
 
 function App() {
   return (
-    <div className="App">
+    <div
+      style={{
+        display: 'flex',
+        margin: '2rem',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        flexDirection: 'row-reverse',
+      }}
+      className="App"
+    >
       <APathfinding />
     </div>
   );
