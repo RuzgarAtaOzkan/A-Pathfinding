@@ -11,18 +11,23 @@ function APathfinding() {
   const [arr, setArr] = useState([]);
   const [mouseDown, setMouseDown] = useState(false);
   const [currentParentNode, setCurrentParentNode] = useState({});
+  const [currentPathParentNode, setCurrentPathParentNode] = useState({});
   const [startNode, setStartNode] = useState({});
   const [endNode, setEndNode] = useState({});
   const [walkablePath, setWalkablePath] = useState([]);
   const [intervalId, setIntervalId] = useState(-1);
   const [onlyNeighbours, setOnlyNeighbours] = useState([]);
+  const [finalPath, setFinalPath] = useState([]);
 
+  const container = useRef();
   const startClickRef = React.useRef();
+  const findPathClickRef = React.useRef();
 
   useEffect(() => {
     if (Object.entries(currentParentNode).length) {
       const { gCost, hCost, fCost } = currentParentNode;
       console.log(gCost, hCost, fCost);
+      console.log(currentPathParentNode);
     }
 
     return () => {};
@@ -36,9 +41,8 @@ function APathfinding() {
     endColor: 'red',
     neighbourColor: 'green',
     pathColor: 'orange',
+    finalPath: 'turquoise',
   };
-
-  const container = useRef();
 
   function injectCoordinates(_arr) {
     const childrenLength = container.current.children.length;
@@ -47,6 +51,7 @@ function APathfinding() {
       if (container.current && container.current.children) {
         const currentChildren = container.current.children[i];
 
+        // complicated way of getting index, we might just say 1.
         const currentIndex = Number(currentChildren.getAttribute('index'));
 
         const { x, y, width, height } = currentChildren.getBoundingClientRect();
@@ -92,13 +97,12 @@ function APathfinding() {
 
   // finds neighbour nodes
 
-  /*
-  function findPath({ startNode, currentParentNode, arr }) {
+  function findPathNeighbours({ startNode, currentPathParentNode, arr }) {
     if (!startNode || !currentParentNode || !arr) {
       return null;
     }
 
-    const { x, y, width, height } = currentParentNode;
+    const { x, y, width, height } = currentPathParentNode;
 
     function isNeighbour({ current, i, j }) {
       if (
@@ -113,8 +117,8 @@ function APathfinding() {
 
       if (
         current.color === 'black' ||
-        current.color === colors.startColor ||
-        current.color === colors.pathColor
+        (current.color !== colors.pathColor &&
+          current.color !== colors.startColor)
       ) {
         return false;
       }
@@ -154,21 +158,12 @@ function APathfinding() {
           return null;
         });
 
-        const updatedNeighbour = {
-          ...neighbour,
-          color: colors.neighbourColor,
-          gCost: neighbour?.gCost,
-          fCost: neighbour?.fCost,
-          hCost: neighbour?.hCost,
-        };
-
-        neighbours.push(updatedNeighbour);
+        neighbours.push(neighbour);
       }
     }
 
     return neighbours;
   }
-  */
 
   function findNeighbours({ startNode, currentParentNode, arr }) {
     if (!startNode || !currentParentNode || !arr) {
@@ -380,6 +375,7 @@ function APathfinding() {
             });
 
             _arr[index].color = colors.startColor;
+            _arr[index].gCost = 0;
 
             setStartNode(current);
             setCurrentParentNode(current);
@@ -526,6 +522,8 @@ function APathfinding() {
             setWalkablePath([]);
             setIntervalId(-1);
             setOnlyNeighbours([]);
+            setFinalPath([]);
+            setCurrentPathParentNode({});
           }}
         >
           Reset
@@ -562,8 +560,15 @@ function APathfinding() {
 
               if (newCurrentParentNode?.id === endNode?.id) {
                 // Draw the path, destination has been found
-                alert('Arrived');
                 clearInterval(intervalId);
+
+                setCurrentPathParentNode(endNode);
+
+                const id = setInterval(() => {
+                  findPathClickRef.current.click();
+                }, 50);
+
+                setIntervalId(id);
                 return 0;
               }
 
@@ -607,6 +612,71 @@ function APathfinding() {
             }
 
             startAlgorithm();
+          }}
+        />
+
+        <div
+          ref={findPathClickRef}
+          onClick={() => {
+            function drawPath() {
+              //console.log(walkablePath);
+
+              let neighbours = findPathNeighbours({
+                startNode,
+                currentPathParentNode,
+                arr,
+              });
+
+              neighbours = neighbours.filter(
+                (currentNeighbour) => typeof currentNeighbour === 'object'
+              );
+
+              console.log(neighbours);
+
+              const lowestGCost = findMin(
+                neighbours.map(
+                  (currentMapNeighbour) => currentMapNeighbour.gCost
+                )
+              );
+
+              const selectedNeighbour = neighbours.find((currentNeighbour) => {
+                if (
+                  !currentNeighbour.gCost ||
+                  currentNeighbour.gCost === lowestGCost
+                ) {
+                  return currentNeighbour;
+                } else {
+                  return null;
+                }
+              });
+
+              if (selectedNeighbour.id === startNode.id) {
+                clearInterval(intervalId);
+              }
+
+              setFinalPath([...finalPath, { ...selectedNeighbour }]);
+
+              const updatedArr = arr.map((currentNode) => {
+                for (let i = 0; i < finalPath.length; i++) {
+                  if (currentNode.id === finalPath[i].id) {
+                    return {
+                      ...currentNode,
+                      color: colors.finalPath,
+                    };
+                  }
+                }
+
+                return {
+                  ...currentNode,
+                };
+              });
+
+              setArr(updatedArr);
+
+              setCurrentPathParentNode(selectedNeighbour);
+            }
+
+            drawPath();
           }}
         />
       </div>

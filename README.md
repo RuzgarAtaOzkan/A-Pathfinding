@@ -1,6 +1,14 @@
 # Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The project deployed to https://pathfindingvisualization.vercel.app
+
+you can check it out.
+
+## Install
+
+```shell
+
+```
 
 ## Available Scripts
 
