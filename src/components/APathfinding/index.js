@@ -26,8 +26,9 @@ function APathfinding() {
   useEffect(() => {
     if (Object.entries(currentParentNode).length) {
       const { gCost, hCost, fCost } = currentParentNode;
-      console.log(gCost, hCost, fCost);
-      console.log(currentPathParentNode);
+      if (gCost && hCost && fCost) {
+        console.log(gCost, hCost, fCost);
+      }
     }
 
     return () => {};
@@ -116,6 +117,7 @@ function APathfinding() {
       }
 
       if (
+        current.color === colors.finalPath ||
         current.color === 'black' ||
         (current.color !== colors.pathColor &&
           current.color !== colors.startColor)
@@ -302,8 +304,6 @@ function APathfinding() {
       }
     }
 
-    //console.log(currentNeighbours);
-
     if (currentNeighbours.length === 0) {
       return null;
     }
@@ -395,16 +395,37 @@ function APathfinding() {
           id={index + 1}
           index={index}
         >
-          <div style={{ position: 'absolute', top: '0', left: '0' }}>
-            {/*current.fCost*/}
+          <div
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              fontSize: '8px',
+            }}
+          >
+            {current.fCost}
           </div>
 
-          <div style={{ position: 'absolute', bottom: '0', left: '0' }}>
-            {/*current.gCost*/}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              left: '0',
+              fontSize: '8px',
+            }}
+          >
+            {current.gCost}
           </div>
 
-          <div style={{ position: 'absolute', bottom: '0', right: '0' }}>
-            {/*current.hCost*/}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '0',
+              fontSize: '8px',
+            }}
+          >
+            {current.hCost}
           </div>
         </div>
       );
@@ -631,8 +652,6 @@ function APathfinding() {
                 (currentNeighbour) => typeof currentNeighbour === 'object'
               );
 
-              console.log(neighbours);
-
               const lowestGCost = findMin(
                 neighbours.map(
                   (currentMapNeighbour) => currentMapNeighbour.gCost
@@ -649,10 +668,6 @@ function APathfinding() {
                   return null;
                 }
               });
-
-              if (selectedNeighbour.id === startNode.id) {
-                clearInterval(intervalId);
-              }
 
               setFinalPath([...finalPath, { ...selectedNeighbour }]);
 
@@ -674,6 +689,15 @@ function APathfinding() {
               setArr(updatedArr);
 
               setCurrentPathParentNode(selectedNeighbour);
+
+              if (selectedNeighbour.id === startNode.id) {
+                clearInterval(intervalId);
+
+                setInterval(() => {
+                  const reversedFinalPath = [...finalPath].reverse();
+                }, 50);
+                return;
+              }
             }
 
             drawPath();
