@@ -1,4 +1,4 @@
-# A\* Pathfinding Visualization algorithm implemented in create-react-app.
+# A\* Pathfinding Visualization algorithm implemented with JavaScript on create-react-app.
 
 The project deployed to https://pathfindingvisualization.vercel.app
 
