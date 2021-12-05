@@ -18,10 +18,15 @@ function APathfinding() {
   const [intervalId, setIntervalId] = useState(-1);
   const [onlyNeighbours, setOnlyNeighbours] = useState([]);
   const [finalPath, setFinalPath] = useState([]);
+  const [reversedFinalPath, setReversedFinalPath] = useState([]);
+  const [finished, setFinished] = useState(false);
+
+  const [pathIndex, setPathIndex] = useState(0);
 
   const container = useRef();
   const startClickRef = React.useRef();
   const findPathClickRef = React.useRef();
+  const walkingRefClick = React.useRef();
 
   useEffect(() => {
     if (Object.entries(currentParentNode).length) {
@@ -52,7 +57,7 @@ function APathfinding() {
       if (container.current && container.current.children) {
         const currentChildren = container.current.children[i];
 
-        // complicated way of getting index, we might just say 1.
+        // complicated way of getting index, we might just say i.
         const currentIndex = Number(currentChildren.getAttribute('index'));
 
         const { x, y, width, height } = currentChildren.getBoundingClientRect();
@@ -99,7 +104,7 @@ function APathfinding() {
   // finds neighbour nodes
 
   function findPathNeighbours({ startNode, currentPathParentNode, arr }) {
-    if (!startNode || !currentParentNode || !arr) {
+    if (!startNode || !currentPathParentNode || !arr) {
       return null;
     }
 
@@ -301,6 +306,10 @@ function APathfinding() {
         };
 
         neighbours.push(updatedNeighbour);
+
+        if (updatedNeighbour.id === endNode.id) {
+          return neighbours;
+        }
       }
     }
 
@@ -403,7 +412,7 @@ function APathfinding() {
               fontSize: '8px',
             }}
           >
-            {current.fCost}
+            {finished && current.fCost}
           </div>
 
           <div
@@ -414,7 +423,7 @@ function APathfinding() {
               fontSize: '8px',
             }}
           >
-            {current.gCost}
+            {finished && current.gCost}
           </div>
 
           <div
@@ -425,7 +434,7 @@ function APathfinding() {
               fontSize: '8px',
             }}
           >
-            {current.hCost}
+            {finished && current.hCost}
           </div>
         </div>
       );
@@ -479,7 +488,7 @@ function APathfinding() {
 
             const id = setInterval(() => {
               startClickRef.current.click();
-            }, 50);
+            }, 0);
 
             setIntervalId(id);
           }}
@@ -541,10 +550,14 @@ function APathfinding() {
             setStartNode({});
             setEndNode({});
             setWalkablePath([]);
+            clearInterval(intervalId);
             setIntervalId(-1);
             setOnlyNeighbours([]);
             setFinalPath([]);
+            setReversedFinalPath([]);
             setCurrentPathParentNode({});
+            setFinished(false);
+            setPathIndex(0);
           }}
         >
           Reset
@@ -587,7 +600,7 @@ function APathfinding() {
 
                 const id = setInterval(() => {
                   findPathClickRef.current.click();
-                }, 50);
+                }, 0);
 
                 setIntervalId(id);
                 return 0;
@@ -652,6 +665,27 @@ function APathfinding() {
                 (currentNeighbour) => typeof currentNeighbour === 'object'
               );
 
+              if (!neighbours || !neighbours.length) {
+                for (let i = 0; i < finalPath.length; i++) {
+                  // TODO pick the closest to start point
+                  neighbours = findPathNeighbours({
+                    startNode,
+                    currentPathParentNode: finalPath[i],
+                    arr,
+                  });
+
+                  neighbours = neighbours.filter(
+                    (currentNeighbour) => typeof currentNeighbour === 'object'
+                  );
+
+                  if (neighbours.length > 0) {
+                    break;
+                  }
+                }
+              }
+
+              //console.log(neighbours);
+
               const lowestGCost = findMin(
                 neighbours.map(
                   (currentMapNeighbour) => currentMapNeighbour.gCost
@@ -690,12 +724,21 @@ function APathfinding() {
 
               setCurrentPathParentNode(selectedNeighbour);
 
-              if (selectedNeighbour.id === startNode.id) {
+              if (
+                neighbours
+                  .map((currentNeighbour) => currentNeighbour.id)
+                  .includes(startNode.id)
+              ) {
+                console.log('Going on path functionality starting');
                 clearInterval(intervalId);
+                setStartNode({ ...startNode, color: colors.pathColor });
+                setReversedFinalPath([...finalPath].reverse());
 
-                setInterval(() => {
-                  const reversedFinalPath = [...finalPath].reverse();
-                }, 50);
+                const id = setInterval(() => {
+                  walkingRefClick.current.click();
+                }, 200);
+
+                setIntervalId(id);
                 return;
               }
             }
@@ -703,6 +746,53 @@ function APathfinding() {
             drawPath();
           }}
         />
+
+        <div
+          ref={walkingRefClick}
+          onClick={() => {
+            if (
+              pathIndex - 1 === reversedFinalPath.length ||
+              pathIndex === reversedFinalPath.length ||
+              pathIndex > reversedFinalPath.length
+            ) {
+              clearInterval(intervalId);
+              setFinished(true);
+              return;
+            }
+
+            for (let i = 0; i < reversedFinalPath.length; i++) {
+              reversedFinalPath[i].color = colors.finalPath;
+            }
+
+            reversedFinalPath[pathIndex].color = colors.startColor;
+
+            console.log(reversedFinalPath[pathIndex]);
+
+            //setStartNode(reversedFinalPath[pathIndex]);
+
+            const _arr = arr.map((currentNode) => {
+              for (let i = 0; i < reversedFinalPath.length; i++) {
+                if (currentNode.id === reversedFinalPath[i].id) {
+                  return {
+                    ...reversedFinalPath[i],
+                  };
+                }
+              }
+
+              if (currentNode.id === startNode.id) {
+                return {
+                  ...currentNode,
+                  color: colors.pathColor,
+                };
+              }
+
+              return currentNode;
+            });
+
+            setArr(_arr);
+            setPathIndex(pathIndex + 1);
+          }}
+        ></div>
       </div>
     </>
   );
