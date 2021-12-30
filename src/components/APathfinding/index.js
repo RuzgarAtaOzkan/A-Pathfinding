@@ -311,7 +311,7 @@ function APathfinding() {
           return neighbours;
         }
       }
-    }
+    } 
 
     if (currentNeighbours.length === 0) {
       return null;
@@ -600,7 +600,7 @@ function APathfinding() {
 
                 const id = setInterval(() => {
                   findPathClickRef.current.click();
-                }, 0);
+                }, 100);
 
                 setIntervalId(id);
                 return 0;
@@ -736,7 +736,7 @@ function APathfinding() {
 
                 const id = setInterval(() => {
                   walkingRefClick.current.click();
-                }, 200);
+                }, 150);
 
                 setIntervalId(id);
                 return;
